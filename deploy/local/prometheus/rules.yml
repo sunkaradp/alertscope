@@ -1,0 +1,25 @@
+groups:
+  - name: breaker
+    rules:
+      - alert: BreakerHighErrorRate
+        expr: |
+          sum(rate(breaker_http_requests_total{code=~"5.."}[1m]))
+            / sum(rate(breaker_http_requests_total[1m])) > 0.1
+        for: 30s
+        labels: {severity: warning, container: breaker}
+        annotations:
+          summary: More than 10% of order requests are failing
+
+      - alert: BreakerDown
+        expr: up{job="breaker"} == 0
+        for: 15s
+        labels: {severity: critical, container: breaker}
+        annotations:
+          summary: breaker is not answering scrapes
+
+      - alert: BreakerMemoryHigh
+        expr: breaker_hoard_bytes > 150 * 1024 * 1024
+        for: 10s
+        labels: {severity: warning, container: breaker}
+        annotations:
+          summary: breaker memory keeps growing, container limit is 300Mi

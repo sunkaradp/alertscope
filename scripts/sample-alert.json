@@ -1,0 +1,19 @@
+{
+  "version": "4",
+  "status": "firing",
+  "receiver": "alertscope",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "BreakerHighErrorRate",
+        "severity": "warning",
+        "container": "breaker"
+      },
+      "annotations": {"summary": "More than 10% of order requests are failing"},
+      "startsAt": "STARTS_AT",
+      "generatorURL": "http://localhost:9090/graph?g0.expr=sum%28rate%28breaker_http_requests_total%7Bcode%3D~%225..%22%7D%5B1m%5D%29%29+%2F+sum%28rate%28breaker_http_requests_total%5B1m%5D%29%29+%3E+0.1",
+      "fingerprint": "manual-FINGERPRINT"
+    }
+  ]
+}
