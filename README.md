@@ -1,4 +1,3 @@
-# alertscope
 
 [![ci](https://github.com/sunkaradp/alertscope/actions/workflows/ci.yml/badge.svg)](https://github.com/sunkaradp/alertscope/actions/workflows/ci.yml)
 
