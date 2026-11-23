@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels: {{- include "alertscope.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "alertscope.selector" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "alertscope.selector" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+        - name: alertscope
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - {name: ALERTSCOPE_PROMETHEUS_URL, value: {{ .Values.config.prometheusUrl | quote }}}
+            - {name: ALERTSCOPE_LOKI_URL, value: {{ .Values.config.lokiUrl | quote }}}
+            - {name: ALERTSCOPE_LOOKBACK_MINUTES, value: {{ .Values.config.lookbackMinutes | quote }}}
+            - {name: ALERTSCOPE_COOLDOWN_MINUTES, value: {{ .Values.config.cooldownMinutes | quote }}}
+            - {name: ALERTSCOPE_KUBE_ENABLED, value: {{ .Values.config.kubeEnabled | quote }}}
+            - {name: ALERTSCOPE_LLM_PROVIDER, value: {{ .Values.config.llm.provider | quote }}}
+            - {name: ALERTSCOPE_LLM_MAX_TOKENS, value: {{ .Values.config.llm.maxTokens | quote }}}
+            - {name: ALERTSCOPE_BEDROCK_MODEL_ID, value: {{ .Values.config.bedrock.modelId | quote }}}
+            - {name: ALERTSCOPE_BEDROCK_REGION, value: {{ .Values.config.bedrock.region | quote }}}
+            - {name: ALERTSCOPE_VERTEX_PROJECT, value: {{ .Values.config.vertex.project | quote }}}
+            - {name: ALERTSCOPE_VERTEX_LOCATION, value: {{ .Values.config.vertex.location | quote }}}
+            - {name: ALERTSCOPE_VERTEX_MODEL, value: {{ .Values.config.vertex.model | quote }}}
+            {{- if .Values.slack.existingSecret }}
+            - name: ALERTSCOPE_SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.slack.existingSecret }}
+                  key: SLACK_WEBHOOK_URL
+            {{- end }}
+            {{- if .Values.aws.roleArn }}
+            - {name: AWS_ROLE_ARN, value: {{ .Values.aws.roleArn | quote }}}
+            - {name: AWS_WEB_IDENTITY_TOKEN_FILE, value: /var/run/secrets/aws/token}
+            - {name: AWS_STS_REGIONAL_ENDPOINTS, value: regional}
+            - {name: AWS_REGION, value: {{ .Values.config.bedrock.region | quote }}}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 20
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+            {{- if .Values.aws.roleArn }}
+            - {name: aws-token, mountPath: /var/run/secrets/aws, readOnly: true}
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.aws.roleArn }}
+        - name: aws-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: sts.amazonaws.com
+                  expirationSeconds: 3600
+                  path: token
+        {{- end }}

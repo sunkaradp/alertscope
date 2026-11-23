@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: alertscope
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/sunkaradp/alertscope.git
+    targetRevision: main
+    path: charts/alertscope
+    helm:
+      valueFiles: [../../gitops/values/alertscope.yaml]
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: alertscope
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions: [CreateNamespace=true]

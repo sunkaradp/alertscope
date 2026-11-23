@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: breaker
+  labels: {app: breaker}
+spec:
+  selector: {app: breaker}
+  ports:
+    - {name: http, port: 8000, targetPort: http}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: breaker
+  labels: {{- toYaml .Values.prometheus.labels | nindent 4 }}
+spec:
+  selector:
+    matchLabels: {app: breaker}
+  endpoints:
+    - {port: http, interval: 15s}

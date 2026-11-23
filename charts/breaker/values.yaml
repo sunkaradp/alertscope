@@ -1,0 +1,13 @@
+image:
+  repository: europe-west3-docker.pkg.dev/PROJECT_ID/alertscope/breaker
+  tag: ""
+
+mode: healthy
+
+resources:
+  requests: {cpu: 20m, memory: 64Mi}
+  limits: {memory: 192Mi}
+
+prometheus:
+  labels:
+    release: kube-prometheus-stack

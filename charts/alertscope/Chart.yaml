@@ -1,0 +1,6 @@
+apiVersion: v2
+name: alertscope
+description: First-pass investigation of Alertmanager alerts with Prometheus, Loki and an LLM
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

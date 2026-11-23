@@ -1,0 +1,6 @@
+apiVersion: v2
+name: breaker
+description: Demo service that fails on demand, for testing alerting and alertscope
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

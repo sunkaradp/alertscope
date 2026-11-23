@@ -1,0 +1,13 @@
+{{- if .Values.dashboard.enabled }}
+# Picked up by the Grafana dashboard sidecar in kube-prometheus-stack.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-dashboard
+  labels:
+    {{- include "alertscope.labels" . | nindent 4 }}
+    grafana_dashboard: "1"
+data:
+  alertscope.json: |-
+{{ .Files.Get "dashboards/alertscope.json" | indent 4 }}
+{{- end }}

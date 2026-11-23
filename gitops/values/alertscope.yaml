@@ -1,0 +1,17 @@
+image:
+  repository: europe-west3-docker.pkg.dev/PROJECT_ID/alertscope/alertscope
+  tag: "0.1.0"
+
+config:
+  llm:
+    provider: bedrock
+
+aws:
+  roleArn: arn:aws:iam::AWS_ACCOUNT_ID:role/alertscope-bedrock
+
+serviceAccount:
+  annotations:
+    iam.gke.io/gcp-service-account: alertscope@PROJECT_ID.iam.gserviceaccount.com
+
+slack:
+  existingSecret: alertscope-slack

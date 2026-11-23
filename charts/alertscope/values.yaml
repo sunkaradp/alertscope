@@ -1,0 +1,54 @@
+image:
+  repository: europe-west3-docker.pkg.dev/PROJECT_ID/alertscope/alertscope
+  tag: ""
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+config:
+  prometheusUrl: http://kube-prometheus-stack-prometheus.monitoring:9090
+  lokiUrl: http://loki.monitoring:3100
+  lookbackMinutes: 15
+  cooldownMinutes: 30
+  kubeEnabled: true
+  llm:
+    provider: bedrock        # bedrock | vertex | stub
+    maxTokens: 1200
+  bedrock:
+    modelId: eu.anthropic.claude-haiku-4-5-20251001-v1:0
+    region: eu-central-1
+  vertex:
+    project: ""
+    location: europe-west4
+    model: gemini-2.5-flash
+
+# Secret with key SLACK_WEBHOOK_URL. Leave empty to only log analyses.
+slack:
+  existingSecret: ""
+
+# Cross-cloud auth to Bedrock without static keys: the pod gets a projected
+# service account token with audience sts.amazonaws.com, and boto3 exchanges it
+# via AssumeRoleWithWebIdentity. See infra/aws.
+aws:
+  roleArn: ""
+
+serviceAccount:
+  name: alertscope
+  annotations: {}
+    # iam.gke.io/gcp-service-account: alertscope@PROJECT_ID.iam.gserviceaccount.com
+
+# ConfigMap with the Grafana dashboard (needs the grafana sidecar, on by
+# default in kube-prometheus-stack)
+dashboard:
+  enabled: true
+
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack
+
+resources:
+  requests: {cpu: 50m, memory: 128Mi}
+  limits: {memory: 256Mi}
+
+extraEnv: []

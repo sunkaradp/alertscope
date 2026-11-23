@@ -1,0 +1,32 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: breaker
+  labels: {{- toYaml .Values.prometheus.labels | nindent 4 }}
+spec:
+  groups:
+    - name: breaker
+      rules:
+        - alert: BreakerHighErrorRate
+          expr: |
+            sum by (namespace, pod) (rate(breaker_http_requests_total{code=~"5.."}[2m]))
+              / sum by (namespace, pod) (rate(breaker_http_requests_total[2m])) > 0.1
+          for: 1m
+          labels: {severity: warning}
+          annotations:
+            summary: More than 10% of order requests are failing in {{`{{ $labels.pod }}`}}
+
+        - alert: BreakerRestarting
+          expr: increase(kube_pod_container_status_restarts_total{container="breaker"}[10m]) > 1
+          labels: {severity: critical}
+          annotations:
+            summary: breaker restarted {{`{{ $value | humanize }}`}} times in 10 minutes
+
+        - alert: BreakerMemoryNearLimit
+          expr: |
+            max by (namespace, pod) (container_memory_working_set_bytes{container="breaker"})
+              / max by (namespace, pod) (kube_pod_container_resource_limits{container="breaker", resource="memory"}) > 0.8
+          for: 30s
+          labels: {severity: warning}
+          annotations:
+            summary: breaker is using over 80% of its memory limit
