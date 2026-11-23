@@ -1,0 +1,59 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+    paths: ["app/**", "demo/**"]
+  workflow_dispatch:
+
+# Repo variables (Settings > Secrets and variables > Actions > Variables):
+#   GCP_WIF_PROVIDER  - terraform output github_wif_provider
+#   GCP_CI_SA         - terraform output github_ci_service_account
+#   REGISTRY          - terraform output registry
+permissions:
+  contents: write
+  id-token: write
+
+concurrency: release
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - {name: alertscope, context: app}
+          - {name: breaker, context: demo/breaker}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_CI_SA }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: gcloud auth configure-docker "${REGISTRY%%/*}" --quiet
+        env:
+          REGISTRY: ${{ vars.REGISTRY }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: ${{ vars.REGISTRY }}/${{ matrix.name }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  bump:
+    needs: images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Point Argo CD at the new images
+        run: |
+          for f in gitops/values/alertscope.yaml gitops/values/breaker.yaml; do
+            yq -i ".image.tag = \"${GITHUB_SHA}\"" "$f"
+          done
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "deploy ${GITHUB_SHA::7}" || exit 0
+          git push
