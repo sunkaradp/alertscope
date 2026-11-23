@@ -1,0 +1,2 @@
+cluster_oidc_issuer = "https://container.googleapis.com/v1/projects/my-project-123/locations/europe-west3-a/clusters/alertscope"
+budget_email        = "you@example.com"
