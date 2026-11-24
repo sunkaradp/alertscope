@@ -36,9 +36,7 @@ async def test_prometheus_label_values_are_escaped_in_pod_selectors(alert):
         )
 
     unusual_namespace = 'shop",pod="other-namespace'
-    changed = alert.model_copy(
-        update={"labels": {**alert.labels, "namespace": unusual_namespace}}
-    )
+    changed = alert.model_copy(update={"labels": {**alert.labels, "namespace": unusual_namespace}})
     transport = httpx.MockTransport(respond)
     async with httpx.AsyncClient(transport=transport) as client:
         collector = PrometheusCollector("http://prometheus", client, timedelta(minutes=5))
@@ -46,9 +44,7 @@ async def test_prometheus_label_values_are_escaped_in_pod_selectors(alert):
 
     expected = "namespace=" + json.dumps(unusual_namespace)
     pod_queries = [
-        query
-        for query in captured_queries
-        if "kube_pod_container_status_restarts_total" in query
+        query for query in captured_queries if "kube_pod_container_status_restarts_total" in query
     ]
     assert pod_queries
     assert all(expected in query for query in pod_queries)
