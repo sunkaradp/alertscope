@@ -34,7 +34,10 @@ def test_incident_lifecycle_persists_and_reopens(tmp_path):
     resolved = store.resolve("incident-123")
     assert resolved["status"] == "resolved"
     assert resolved["resolved_at"] is not None
-    assert [event["event_type"] for event in resolved["events"]][-2:] == ["acknowledged", "resolved"]
+    assert [event["event_type"] for event in resolved["events"]][-2:] == [
+        "acknowledged",
+        "resolved",
+    ]
 
     # A new analysis for the same fingerprint reopens the incident.
     later = analysis.model_copy(update={"summary": "The pod restarted again."})
