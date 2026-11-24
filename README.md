@@ -48,9 +48,11 @@ make break MODE=leak      # errors | slow | leak | crash
 make fix
 ```
 
-Grafana: http://localhost:3000/d/alertscope (user admin; password is
-GRAFANA_ADMIN_PASSWORD from .env, defaulting to local-alertscope-password for
-this localhost-only demo). The other demo endpoints are bound to 127.0.0.1.
+AlertScope console: http://localhost:8080 (incident list, analysis details,
+acknowledge and resolve actions). Grafana: http://localhost:3000/d/alertscope
+(user admin; password is GRAFANA_ADMIN_PASSWORD from .env, defaulting to
+local-alertscope-password for this localhost-only demo). The other demo endpoints
+are bound to 127.0.0.1.
 
 `make fire` sends a fake alert straight to the webhook if you don't want to wait.
 
@@ -138,7 +140,8 @@ gcloud container clusters resize alertscope --node-pool default --num-nodes 0 --
 
 ## Grafana / metrics
 
-No own UI, it's all in Grafana. The chart ships the dashboard as a ConfigMap
+Grafana provides the infrastructure/telemetry dashboards; the AlertScope console
+at `/` provides incident workflow and investigation details. The chart ships the dashboard as a ConfigMap
 (`charts/alertscope/dashboards/alertscope.json`) and the kube-prometheus-stack sidecar
 loads it. Analyses are just log lines:
 
