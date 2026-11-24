@@ -37,6 +37,12 @@ jobs:
             helm template x "$c" -f "gitops/values/$(basename "$c").yaml" > /dev/null
           done
 
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose -f deploy/local/docker-compose.yml config --quiet
+
   terraform:
     runs-on: ubuntu-latest
     strategy:
