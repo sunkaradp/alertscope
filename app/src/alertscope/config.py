@@ -34,6 +34,12 @@ class Settings(BaseSettings):
 
     slack_webhook_url: str = ""
 
+    # Optional shared secret for Alertmanager webhook authentication.
+    webhook_token: str = ""
+
+    # Upper bound for in-flight background analyses; overload returns HTTP 503.
+    max_pending_tasks: int = Field(default=100, ge=1, le=5000)
+
     # Don't re-analyse the same alert (by fingerprint) inside this window.
     cooldown_minutes: int = 30
     max_concurrent: int = 4
