@@ -118,7 +118,6 @@ async def incidents(request: Request, limit: int = 100):
     return request.app.state.store.list_incidents(limit)
 
 
-
 @app.get("/incidents/{incident_id}")
 async def incident_detail(incident_id: str, request: Request):
     authorize_incident_access(request)
@@ -148,6 +147,7 @@ async def resolve_incident(incident_id: str, request: Request):
 
 @app.get("/analyses", response_model=list[Analysis])
 async def analyses(request: Request, limit: int = 20):
+    authorize_incident_access(request)
     return list(request.app.state.pipeline.history)[:limit]
 
 
