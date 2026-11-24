@@ -89,13 +89,18 @@ class IncidentStore:
                     severity=excluded.severity,
                     last_seen=excluded.last_seen,
                     latest_analysis=excluded.latest_analysis,
-                    status=CASE WHEN incidents.status='resolved' THEN 'open' ELSE incidents.status END,
+                    status=CASE WHEN incidents.status='resolved' THEN 'open'
+                                ELSE incidents.status END,
                     resolved_at=NULL
             """, (
                 incident_id, alert.name, alert.severity, first_seen, now,
                 analysis.model_dump_json(),
             ))
-            event_type = "reopened" if previous and previous["status"] == "resolved" else "analysis_recorded"
+            event_type = (
+                "reopened"
+                if previous and previous["status"] == "resolved"
+                else "analysis_recorded"
+            )
             db.execute("""
                 INSERT INTO incident_events (incident_id, event_type, occurred_at, details)
                 VALUES (?, ?, ?, ?)
