@@ -190,6 +190,64 @@ Prometheus metrics on `/metrics/`:
 - `alertscope_llm_tokens_total{provider,direction}`
 - `alertscope_collector_errors_total{collector}`
 
+## API smoke test
+
+After starting the service locally, these checks verify the HTTP API without needing
+Prometheus or Loki to be populated:
+
+```bash
+# 1) Liveness and readiness
+curl -fsS http://localhost:8080/healthz
+curl -fsS http://localhost:8080/readyz
+
+# 2) Submit one clearly labelled smoke-test alert.
+# The owner label is only demo metadata; it is not used for authentication.
+curl -fsS -X POST http://localhost:8080/webhook/alertmanager \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ALERTSCOPE_WEBHOOK_TOKEN:-}" \
+  -d '{
+    "version": "4",
+    "status": "firing",
+    "receiver": "alertscope-smoke-test",
+    "groupKey": "{}:{alertname=\"AlertScopeSmokeTest\"}",
+    "alerts": [{
+      "status": "firing",
+      "labels": {
+        "alertname": "AlertScopeSmokeTest",
+        "severity": "warning",
+        "service": "alertscope-demo",
+        "owner": "Durga Prasad Sunkara"
+      },
+      "annotations": {
+        "summary": "Manual API smoke test",
+        "description": "A test alert sent to verify the AlertScope webhook and incident pipeline."
+      },
+      "startsAt": "2026-11-24T12:00:00Z",
+      "generatorURL": "",
+      "fingerprint": "alertscope-smoke-test-001"
+    }],
+    "commonLabels": {
+      "alertname": "AlertScopeSmokeTest",
+      "severity": "warning"
+    },
+    "externalURL": "https://github.com/sunkaradp/alertscope"
+  }'
+
+# 3) Confirm that the analysis worker recorded the incident.
+# Analysis runs in the background; retry this GET after a few seconds if it is empty.
+curl -fsS "http://localhost:8080/incidents?limit=10"
+```
+
+Expected webhook response: HTTP 202 with `received: 1` and `queued: 1`.
+The incident may take a few seconds to appear because analysis is asynchronous.
+If `ALERTSCOPE_WEBHOOK_TOKEN` is configured, use the same token for the webhook
+and incident API requests. The default `stub` provider is deterministic demo logic,
+not a real LLM. A successful readiness check confirms the API is running; a recorded
+incident confirms the webhook-to-ledger path worked.
+
+For the hosted browser console, enter the HTTPS API base URL and bearer token
+(if enabled). The API must allow the Pages origin through `ALERTSCOPE_CORS_ORIGINS`.
+
 ## Incident lifecycle and tracing
 
 Analyses are stored in SQLite. The app defaults to `/tmp/alertscope.db` for a
