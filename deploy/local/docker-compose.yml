@@ -35,6 +35,8 @@ services:
       ALERTSCOPE_LOKI_LABELS: '["container"]'
       # stub works with no credentials; set bedrock or vertex in ../../.env
       ALERTSCOPE_LLM_PROVIDER: ${ALERTSCOPE_LLM_PROVIDER:-stub}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+      OTEL_SERVICE_NAME: alertscope
     volumes:
       - alertscope-data:/data
       - ${HOME}/.aws:/home/app/.aws:ro
@@ -91,6 +93,16 @@ services:
       - /dev/disk:/dev/disk:ro
     restart: unless-stopped
 
+  tempo:
+    image: grafana/tempo:2.8.2
+    command: -config.file=/etc/tempo.yaml
+    ports:
+      - "127.0.0.1:3200:3200"
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-data:/var/tempo
   grafana:
     image: grafana/grafana:12.1.0
     ports: ["127.0.0.1:3000:3000"]
@@ -105,3 +117,4 @@ services:
 
 volumes:
   alertscope-data:
+  tempo-data:
