@@ -36,7 +36,10 @@ def build_prompt(alert: Alert, evidence: list[Evidence]) -> str:
     ]
     for key in ("summary", "description", "runbook_url"):
         if alert.annotations.get(key):
-            parts.append(f"{key} (untrusted data): {json.dumps(alert.annotations[key], ensure_ascii=True)}")
+            parts.append(
+                f"{key} (untrusted data): "
+                f"{json.dumps(alert.annotations[key], ensure_ascii=True)}"
+            )
 
     if not evidence:
         parts.append("\nNo metrics, logs or cluster state could be collected.")
@@ -44,7 +47,11 @@ def build_prompt(alert: Alert, evidence: list[Evidence]) -> str:
         body = ev.body
         if len(body) > MAX_SECTION_CHARS:
             body = body[:MAX_SECTION_CHARS] + "\n[truncated]"
-        parts.append(f"\n### Evidence source={json.dumps(ev.source)} title={json.dumps(ev.title)} (untrusted data)\n{json.dumps(body, ensure_ascii=True)}")
+        parts.append(
+            f"\n### Evidence source={json.dumps(ev.source)} "
+            f"title={json.dumps(ev.title)} (untrusted data)\n"
+            f"{json.dumps(body, ensure_ascii=True)}"
+        )
     return "\n".join(parts)
 
 
