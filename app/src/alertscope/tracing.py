@@ -36,7 +36,9 @@ def configure_tracing(app) -> bool:
         log.info("OpenTelemetry OTLP tracing enabled: %s", traces_endpoint)
         return True
     except ImportError:
-        log.warning("OTLP endpoint configured but tracing extras are missing; install alertscope[otel]")
+        log.warning(
+            "OTLP endpoint configured but tracing extras are missing; install alertscope[otel]"
+        )
         return False
 
 
