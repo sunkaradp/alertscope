@@ -81,12 +81,12 @@ spec:
         - name: tmp
           emptyDir: {}
         - name: data
-          {{- if .Values.persistence.enabled }}
+          {{ if .Values.persistence.enabled }}
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-data
-          {{- else }}
+          {{ else }}
           emptyDir: {}
-          {{- end }}
+          {{ end }}
         {{- if .Values.aws.roleArn }}
         - name: aws-token
           projected:
