@@ -5,7 +5,7 @@ import httpx
 
 from alertscope.collectors.prometheus import PrometheusCollector
 from alertscope.models import Evidence
-from alertscope.prompt import SYSTEM, build_prompt
+from alertscope.prompt import SYSTEM, build_prompt, parse_reply
 
 
 def test_alert_and_evidence_are_marked_as_untrusted_data(alert):
@@ -47,3 +47,20 @@ async def test_prometheus_label_values_are_escaped_in_pod_selectors(alert):
     pod_queries = [query for query in captured_queries if "kube_pod_container_status_restarts_total" in query]
     assert pod_queries
     assert all(expected in query for query in pod_queries)
+
+
+
+def test_model_response_schema_is_bounded_and_confidence_is_allowlisted(alert):
+    analysis = parse_reply(
+        '{"summary":"ok","likely_cause":"unknown","confidence":"certain",'
+        '"evidence":"not a list","next_steps":{"run":"unsafe"}}',
+        alert,
+    )
+    assert analysis.confidence == "low"
+    assert analysis.evidence == []
+    assert analysis.next_steps == []
+
+
+def test_non_object_model_json_falls_back_safely(alert):
+    analysis = parse_reply('["not", "an", "object"]', alert)
+    assert analysis.likely_cause == "unparsed model reply"
