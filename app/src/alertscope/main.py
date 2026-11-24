@@ -1,11 +1,12 @@
 import asyncio
 import logging
+import secrets
 from contextlib import asynccontextmanager
 from datetime import timedelta
 from functools import partial
 
 import httpx
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from prometheus_client import make_asgi_app
 
 from . import __version__, slack
@@ -48,6 +49,7 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     async with httpx.AsyncClient(timeout=20) as http:
         app.state.pipeline = build_pipeline(settings, http)
+        app.state.settings = settings
         app.state.tasks = set()
         log.info("alertscope %s started, llm=%s", __version__, settings.llm_provider)
         yield
@@ -68,7 +70,17 @@ async def healthz():
 async def alertmanager(payload: AlertmanagerPayload, request: Request):
     # Alertmanager times out after 10s by default, so answer straight away and
     # do the work in the background.
+    settings: Settings = request.app.state.settings
+    if settings.webhook_token:
+        supplied = request.headers.get("authorization", "")
+        expected = f"Bearer {settings.webhook_token}"
+        if not secrets.compare_digest(supplied, expected):
+            raise HTTPException(status_code=401, detail="invalid webhook credentials")
+
     pipeline: Pipeline = request.app.state.pipeline
+    tasks = request.app.state.tasks
+    if len(tasks) + len(payload.alerts) > settings.max_pending_tasks:
+        raise HTTPException(status_code=503, detail="analysis queue is full; retry later")
     queued = 0
     for alert in payload.alerts:
         if not pipeline.accept(alert):
