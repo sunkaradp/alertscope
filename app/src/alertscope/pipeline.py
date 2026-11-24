@@ -8,6 +8,7 @@ from typing import Protocol
 from . import events, metrics, prompt
 from .llm import LLMProvider
 from .models import Alert, Analysis, Evidence
+from .tracing import analysis_span
 
 log = logging.getLogger(__name__)
 
@@ -79,6 +80,14 @@ class Pipeline:
         return evidence
 
     async def analyse(self, alert: Alert) -> Analysis:
+        with analysis_span(alert) as span:
+            if span is not None:
+                span.set_attribute("alert.name", alert.name)
+                span.set_attribute("alert.severity", alert.severity)
+                span.set_attribute("alert.status", alert.status)
+            return await self._analyse(alert)
+
+    async def _analyse(self, alert: Alert) -> Analysis:
         async with self.sem:
             t0 = time.monotonic()
             now = datetime.now(UTC)
