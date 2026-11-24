@@ -38,6 +38,7 @@ class IncidentStore:
 
     def record_analysis(self, alert: Alert, analysis: Analysis) -> None:
         first_seen = alert.startsAt.isoformat()
+        first_seen = alert.startsAt.isoformat()
         now = analysis.created_at.isoformat()
         with self._connect() as db:
             db.execute("""
