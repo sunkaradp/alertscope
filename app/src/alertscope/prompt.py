@@ -45,8 +45,7 @@ def build_prompt(alert: Alert, evidence: list[Evidence]) -> str:
     for key in ("summary", "description", "runbook_url"):
         if alert.annotations.get(key):
             parts.append(
-                f"{key} (untrusted data): "
-                f"{json.dumps(alert.annotations[key], ensure_ascii=True)}"
+                f"{key} (untrusted data): {json.dumps(alert.annotations[key], ensure_ascii=True)}"
             )
 
     if not evidence:
