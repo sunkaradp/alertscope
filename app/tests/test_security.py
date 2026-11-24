@@ -44,10 +44,13 @@ async def test_prometheus_label_values_are_escaped_in_pod_selectors(alert):
         await collector.collect(changed, changed.startsAt + timedelta(minutes=3))
 
     expected = "namespace=" + json.dumps(unusual_namespace)
-    pod_queries = [query for query in captured_queries if "kube_pod_container_status_restarts_total" in query]
+    pod_queries = [
+        query
+        for query in captured_queries
+        if "kube_pod_container_status_restarts_total" in query
+    ]
     assert pod_queries
     assert all(expected in query for query in pod_queries)
-
 
 
 def test_model_response_schema_is_bounded_and_confidence_is_allowlisted(alert):
