@@ -66,6 +66,13 @@ async def healthz():
     return {"ok": True}
 
 
+@app.get("/readyz")
+async def readyz(request: Request):
+    if not getattr(request.app.state, "pipeline", None):
+        raise HTTPException(status_code=503, detail="service is not initialized")
+    return {"ready": True}
+
+
 @app.post("/webhook/alertmanager", status_code=202)
 async def alertmanager(payload: AlertmanagerPayload, request: Request):
     # Alertmanager times out after 10s by default, so answer straight away and
