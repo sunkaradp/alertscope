@@ -1,5 +1,6 @@
 import logging
 import os
+from contextlib import nullcontext
 
 log = logging.getLogger(__name__)
 
@@ -44,3 +45,13 @@ def configure_tracing(app) -> bool:
             "install alertscope[otel]"
         )
         return False
+
+
+
+def analysis_span(alert):
+    """Return an analysis span when tracing is installed, otherwise a no-op context."""
+    try:
+        from opentelemetry import trace
+    except ImportError:
+        return nullcontext(None)
+    return trace.get_tracer("alertscope").start_as_current_span("alertscope.analysis")
