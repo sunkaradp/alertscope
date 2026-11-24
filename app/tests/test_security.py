@@ -1,4 +1,5 @@
 from datetime import timedelta
+import json
 
 import httpx
 
@@ -42,7 +43,7 @@ async def test_prometheus_label_values_are_escaped_in_pod_selectors(alert):
         collector = PrometheusCollector("http://prometheus", client, timedelta(minutes=5))
         await collector.collect(changed, changed.startsAt + timedelta(minutes=3))
 
-    expected = "namespace=" + __import__("json").dumps(unusual_namespace)
+    expected = "namespace=" + json.dumps(unusual_namespace)
     pod_queries = [query for query in captured_queries if "kube_pod_container_status_restarts_total" in query]
     assert pod_queries
     assert all(expected in query for query in pod_queries)
