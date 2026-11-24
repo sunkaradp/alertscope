@@ -4,9 +4,11 @@ import secrets
 from contextlib import asynccontextmanager
 from datetime import timedelta
 from functools import partial
+from pathlib import Path
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse
 from prometheus_client import make_asgi_app
 
 from . import __version__, slack
@@ -64,6 +66,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="alertscope", version=__version__, lifespan=lifespan)
 app.mount("/metrics", make_asgi_app())
+
+
+@app.get("/", include_in_schema=False)
+async def console():
+    return FileResponse(Path(__file__).parent / "static" / "index.html")
 
 
 @app.get("/healthz")
