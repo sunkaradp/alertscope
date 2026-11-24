@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime, timedelta
 
@@ -117,8 +118,9 @@ class PrometheusCollector:
 
         ns, pod = alert.labels.get("namespace"), alert.labels.get("pod")
         if ns and pod:
+            selector = f"namespace={json.dumps(ns)}, pod={json.dumps(pod)}"
             for title, tmpl in POD_QUERIES.items():
-                q = tmpl % f'namespace="{ns}", pod="{pod}"'
+                q = tmpl % selector
                 try:
                     result = await self.query(q, now)
                 except Exception as exc:  # noqa: BLE001

@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101820">
+  <title>AlertScope | SRE Operations</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#101820; color:#e7edf2; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:radial-gradient(ellipse at 80% -15%,#203342 0,transparent 42%),#101820; min-height:100vh; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px clamp(18px,4vw,56px); border-bottom:1px solid #2a3945; background:#101820e8; position:sticky; top:0; z-index:3; backdrop-filter:blur(14px); }
+    .brand { display:flex; align-items:center; gap:13px; }
+    .mark { width:36px;height:36px;border-radius:10px;background:#d6e5ed;color:#101820;display:grid;place-items:center;font-weight:900;font-size:18px; }
+    h1 { margin:0;font-size:17px;letter-spacing:.02em; } .sub { color:#8da0ae;font-size:12px;margin-top:3px; }
+    .header-right { display:flex;align-items:center;gap:14px;flex-wrap:wrap; }
+    .live { color:#a9d8c0;font-size:12px;display:flex;align-items:center;gap:8px; }
+    .dot { width:7px;height:7px;border-radius:50%;background:#64c995;box-shadow:0 0 12px #64c995; }
+    button { border:1px solid #40515e;background:#1b2a35;color:#e7edf2;border-radius:8px;padding:9px 12px;font:inherit;font-size:12px;cursor:pointer; }
+    button:hover { background:#263a48; } button:disabled { opacity:.45;cursor:wait; }
+    main { max-width:1500px;margin:auto;padding:34px clamp(18px,4vw,56px) 60px; }
+    .eyebrow { color:#90a4b3;font-size:11px;text-transform:uppercase;letter-spacing:.16em;font-weight:700; }
+    .heading { display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:22px; }
+    h2 { margin:7px 0 0;font-size:26px;font-weight:650;letter-spacing:-.03em; }
+    .muted { color:#91a2ae;font-size:13px; }
+    .cards { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0 28px; }
+    .card { background:#17232d;border:1px solid #2a3945;border-radius:12px;padding:17px 18px;min-height:98px; }
+    .card-label { color:#9aacb9;font-size:12px; } .card-value { font-size:27px;font-weight:650;margin-top:9px;letter-spacing:-.04em; }
+    .layout { display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,.9fr);gap:16px;align-items:start; }
+    .panel { border:1px solid #2a3945;background:#17232d;border-radius:12px;overflow:hidden; }
+    .panel-head { display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid #2a3945;gap:12px; }
+    h3 { margin:0;font-size:14px;font-weight:650; } .panel-body { padding:16px 18px; }
+    .table-wrap { overflow:auto; }
+    table { width:100%;border-collapse:collapse;white-space:nowrap;font-size:12px; }
+    th { color:#8fa2b0;text-align:left;font-weight:600;padding:12px 14px;border-bottom:1px solid #2a3945; }
+    td { padding:13px 14px;border-bottom:1px solid #24333e;color:#dce5eb; }
+    tbody tr { cursor:pointer; } tbody tr:hover { background:#20313d; } tbody tr.selected { background:#223846; }
+    .pill { display:inline-flex;align-items:center;border-radius:99px;padding:4px 8px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border:1px solid #40515e; }
+    .open { color:#f3c67b;border-color:#795d32;background:#382e20; } .acknowledged { color:#8dc8ed;border-color:#365e77;background:#203443; } .resolved { color:#9ed7b8;border-color:#3e7258;background:#20372c; }
+    .critical { color:#f29c9c; } .warning { color:#f3c67b; } .info { color:#9cc8e5; }
+    .actions { display:flex;gap:6px; } .actions button { padding:6px 8px;font-size:10px; }
+    pre { margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;color:#c6d3dc; }
+    .detail-title { font-size:17px;font-weight:650;margin:0 0 6px;overflow-wrap:anywhere; }
+    .detail-meta { color:#91a2ae;font-size:11px;margin-bottom:18px; }
+    .section-title { color:#8fa2b0;font-size:10px;text-transform:uppercase;letter-spacing:.12em;margin:17px 0 8px;font-weight:700; }
+    .list { margin:0;padding-left:18px;color:#d2dde5;font-size:12px;line-height:1.65; }
+    .empty { padding:36px 18px;text-align:center;color:#8fa2b0;font-size:13px; }
+    .notice { display:none;padding:12px 14px;border-radius:8px;background:#3a2d1f;border:1px solid #795d32;color:#f3d5a2;font-size:12px;margin-bottom:18px; }
+    .auth { display:flex;align-items:center;gap:8px; } .auth input { width:180px;max-width:35vw;background:#101a22;border:1px solid #40515e;border-radius:8px;padding:9px 10px;color:#e7edf2;font:inherit;font-size:12px; }
+    footer { margin-top:22px;color:#718491;font-size:11px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap; }
+    a { color:#a7c8dc;text-decoration:none; } a:hover { text-decoration:underline; }
+    @media(max-width:900px){.layout{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:560px){header{align-items:flex-start}.header-right{justify-content:flex-end}.auth input{width:120px}.heading{align-items:flex-start;flex-direction:column}.cards{gap:8px}.card{padding:14px}.card-value{font-size:23px}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="mark">A</div><div><h1>AlertScope</h1><div class="sub">SRE operations console</div></div></div>
+  <div class="header-right">
+    <div class="live"><span class="dot"></span><span id="connection">Connecting</span></div>
+    <div class="auth"><input id="token" type="password" placeholder="API bearer token" aria-label="API bearer token"><button id="saveToken">Connect</button></div>
+    <button id="refresh">Refresh</button>
+  </div>
+</header>
+<main>
+  <div class="heading">
+    <div><div class="eyebrow">Operations overview</div><h2>Incident activity</h2><div class="muted" id="updated">Waiting for first refresh…</div></div>
+    <div class="muted">Auto-refresh · 15 seconds</div>
+  </div>
+  <div class="notice" id="notice"></div>
+  <section class="cards">
+    <div class="card"><div class="card-label">Incidents loaded</div><div class="card-value" id="total">—</div></div>
+    <div class="card"><div class="card-label">Open</div><div class="card-value" id="open">—</div></div>
+    <div class="card"><div class="card-label">Acknowledged</div><div class="card-value" id="acknowledged">—</div></div>
+    <div class="card"><div class="card-label">Resolved</div><div class="card-value" id="resolved">—</div></div>
+  </section>
+  <section class="layout">
+    <div class="panel">
+      <div class="panel-head"><h3>Recent incidents</h3><span class="muted" id="count">0 records</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Alert</th><th>Severity</th><th>Status</th><th>Confidence</th><th>Last seen</th><th>Actions</th></tr></thead><tbody id="incidents"></tbody></table>
+      </div>
+      <div class="empty" id="empty">No incidents have been recorded yet. Send a labelled demo alert or trigger an alert from your connected Alertmanager rules.</div>
+    </div>
+    <aside class="panel">
+      <div class="panel-head"><h3>Incident details</h3><span class="muted" id="detail-id">Select a row</span></div>
+      <div class="panel-body" id="detail"><div class="empty">Select an incident to inspect its analysis, evidence and recommended checks.</div></div>
+    </aside>
+  </section>
+  <footer><span>Telemetry and incident records come from connected sources; unavailable data is not fabricated.</span><span><a href="http://localhost:3000" target="_blank" rel="noreferrer">Open Grafana</a> · <a href="/docs" target="_blank" rel="noreferrer">API docs</a></span></footer>
+</main>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  let records = [];
+  let selected = null;
+  let token = sessionStorage.getItem("alertscope-token") || "";
+  $("token").value = token;
+
+  function headers() {
+    return token ? {"Authorization": "Bearer " + token} : {};
+  }
+  function showNotice(message) {
+    $("notice").textContent = message;
+    $("notice").style.display = message ? "block" : "none";
+  }
+  function time(value) {
+    if (!value) return "—";
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? value : d.toLocaleString();
+  }
+  function pill(value) {
+    const el = document.createElement("span");
+    el.className = "pill " + String(value || "open").toLowerCase();
+    el.textContent = value || "unknown";
+    return el;
+  }
+  function addCell(row, value, className) {
+    const td = document.createElement("td");
+    if (value instanceof Node) td.append(value);
+    else td.textContent = value ?? "—";
+    if (className) td.className = className;
+    row.append(td);
+    return td;
+  }
+  function renderDetail(item) {
+    selected = item ? item.incident_id : null;
+    $("detail-id").textContent = item ? item.incident_id.slice(0, 12) : "Select a row";
+    const root = $("detail");
+    root.replaceChildren();
+    if (!item) {
+      root.textContent = "Select an incident to inspect its analysis, evidence and recommended checks.";
+      root.className = "panel-body empty";
+      return;
+    }
+    root.className = "panel-body";
+    const title = document.createElement("div");
+    title.className = "detail-title";
+    title.textContent = item.alert;
+    root.append(title);
+    const meta = document.createElement("div");
+    meta.className = "detail-meta";
+    meta.textContent = item.severity + " · " + item.status + " · first seen " + time(item.first_seen);
+    root.append(meta);
+    const analysis = item.latest_analysis || {};
+    const summary = document.createElement("p");
+    summary.className = "muted";
+    summary.textContent = analysis.summary || "No analysis has been stored.";
+    root.append(summary);
+    const cause = document.createElement("p");
+    cause.textContent = "Likely cause: " + (analysis.likely_cause || "unknown") + " · confidence: " + (analysis.confidence || "low");
+    cause.className = "muted";
+    root.append(cause);
+    for (const [label, values] of [["Evidence", analysis.evidence || []], ["Next checks", analysis.next_steps || []]]) {
+      const heading = document.createElement("div");
+      heading.className = "section-title";
+      heading.textContent = label;
+      root.append(heading);
+      if (!values.length) {
+        const none = document.createElement("div");
+        none.className = "muted";
+        none.textContent = "No " + label.toLowerCase() + " supplied.";
+        root.append(none);
+      } else {
+        const list = document.createElement("ul");
+        list.className = "list";
+        values.forEach(value => {
+          const li = document.createElement("li");
+          li.textContent = value;
+          list.append(li);
+        });
+        root.append(list);
+      }
+    }
+    const more = document.createElement("div");
+    more.className = "section-title";
+    more.textContent = "Record";
+    root.append(more);
+    const pre = document.createElement("pre");
+    pre.textContent = JSON.stringify({incident_id:item.incident_id, first_seen:item.first_seen, last_seen:item.last_seen, acknowledged_at:item.acknowledged_at, resolved_at:item.resolved_at, provider:analysis.provider, duration_s:analysis.duration_s}, null, 2);
+    root.append(pre);
+    const timelineHeading = document.createElement("div");
+    timelineHeading.className = "section-title";
+    timelineHeading.textContent = "Timeline";
+    root.append(timelineHeading);
+    const timeline = document.createElement("ul");
+    timeline.className = "list";
+    (item.events || []).forEach(event => {
+      const li = document.createElement("li");
+      const details = event.details && Object.keys(event.details).length
+        ? " · " + Object.entries(event.details).map(([key, value]) => key + ": " + value).join(", ")
+        : "";
+      li.textContent = time(event.occurred_at) + " · " + event.event_type + details;
+      timeline.append(li);
+    });
+    if (!timeline.children.length) {
+      const li = document.createElement("li");
+      li.textContent = "No lifecycle events recorded.";
+      timeline.append(li);
+    }
+    root.append(timeline);
+  }
+  async function loadDetail(id) {
+    try {
+      const response = await fetch("/incidents/" + encodeURIComponent(id), {headers:headers(), cache:"no-store"});
+      if (!response.ok) return;
+      const item = await response.json();
+      if (selected === id) renderDetail(item);
+    } catch (_) {
+      // Keep the list usable if a detail refresh temporarily fails.
+    }
+  }
+  function render() {
+    $("total").textContent = records.length;
+    $("open").textContent = records.filter(x => x.status === "open").length;
+    $("acknowledged").textContent = records.filter(x => x.status === "acknowledged").length;
+    $("resolved").textContent = records.filter(x => x.status === "resolved").length;
+    $("count").textContent = records.length + " records";
+    $("empty").style.display = records.length ? "none" : "block";
+    const body = $("incidents");
+    body.replaceChildren();
+    records.forEach(item => {
+      const row = document.createElement("tr");
+      if (item.incident_id === selected) row.className = "selected";
+      row.addEventListener("click", () => { selected = item.incident_id; render(); });
+      addCell(row, item.alert);
+      addCell(row, item.severity, String(item.severity || "").toLowerCase());
+      addCell(row, pill(item.status));
+      addCell(row, item.latest_analysis?.confidence || "—");
+      addCell(row, time(item.last_seen));
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      if (item.status === "open") {
+        const ack = document.createElement("button");
+        ack.textContent = "Acknowledge";
+        ack.addEventListener("click", event => { event.stopPropagation(); updateIncident(item, "acknowledge"); });
+        actions.append(ack);
+      }
+      if (item.status !== "resolved") {
+        const resolve = document.createElement("button");
+        resolve.textContent = "Resolve";
+        resolve.addEventListener("click", event => { event.stopPropagation(); updateIncident(item, "resolve"); });
+        actions.append(resolve);
+      }
+      addCell(row, actions);
+      body.append(row);
+    });
+    if (selected) {
+      const current = records.find(x => x.incident_id === selected);
+      if (current) { renderDetail(current); loadDetail(current.incident_id); }
+      else renderDetail(null);
+    }
+  }
+  async function load() {
+    try {
+      const response = await fetch("/incidents?limit=500", {headers:headers(), cache:"no-store"});
+      if (response.status === 401) {
+        $("connection").textContent = "Authentication required";
+        showNotice("This API requires a bearer token. Enter the configured ALERTSCOPE_WEBHOOK_TOKEN above and select Connect.");
+        return;
+      }
+      if (!response.ok) throw new Error("Incident API returned HTTP " + response.status);
+      records = await response.json();
+      $("connection").textContent = "API connected";
+      showNotice("");
+      $("updated").textContent = "Last updated " + new Date().toLocaleTimeString();
+      render();
+    } catch (error) {
+      $("connection").textContent = "API unavailable";
+      showNotice(error.message + ". Start the AlertScope service and check /readyz.");
+    }
+  }
+  async function updateIncident(item, action) {
+    try {
+      const response = await fetch("/incidents/" + encodeURIComponent(item.incident_id) + "/" + action, {method:"POST",headers:headers()});
+      if (!response.ok) throw new Error("Update failed: HTTP " + response.status);
+      await load();
+    } catch (error) {
+      showNotice(error.message);
+    }
+  }
+  $("saveToken").addEventListener("click", () => {
+    token = $("token").value.trim();
+    sessionStorage.setItem("alertscope-token", token);
+    load();
+  });
+  $("refresh").addEventListener("click", load);
+  load();
+  window.setInterval(load, 15000);
+})();
+</script>
+</body>
+</html>

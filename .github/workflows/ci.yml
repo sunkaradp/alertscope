@@ -3,7 +3,7 @@ name: ci
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, 'feature/**']
 
 jobs:
   app:
@@ -22,6 +22,9 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: pytest -q
+      - run: pip install build
+      - run: python -m build --wheel
+      - run: python -c "import glob, zipfile; p=glob.glob('dist/*.whl')[0]; z=zipfile.ZipFile(p); assert 'alertscope/static/index.html' in z.namelist()"
 
   helm:
     runs-on: ubuntu-latest
@@ -33,6 +36,12 @@ jobs:
             helm lint "$c" -f "gitops/values/$(basename "$c").yaml"
             helm template x "$c" -f "gitops/values/$(basename "$c").yaml" > /dev/null
           done
+
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose -f deploy/local/docker-compose.yml config --quiet
 
   terraform:
     runs-on: ubuntu-latest

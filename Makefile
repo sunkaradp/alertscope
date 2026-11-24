@@ -1,6 +1,8 @@
 COMPOSE = docker compose -f deploy/local/docker-compose.yml
+TOKEN ?=
+AUTH_HEADER = -H "Authorization: Bearer $(TOKEN)"
 
-.PHONY: dev test lint up down logs break fix fire analyses
+.PHONY: dev test lint up down clean logs break fix fire analyses
 
 dev:
 	cd app && python -m venv .venv && .venv/bin/pip install -e '.[dev,all]'
@@ -13,9 +15,14 @@ lint:
 
 up:
 	$(COMPOSE) up -d --build
-	@echo "grafana http://localhost:3000/d/alertscope  prometheus http://localhost:9090"
+	@echo "AlertScope console http://localhost:8080"
+	@echo "Grafana http://localhost:3000/d/alertscope (admin / GRAFANA_ADMIN_PASSWORD; default local-alertscope-password)"
 
 down:
+	$(COMPOSE) down
+
+# Explicitly remove persisted incident and trace data.
+clean:
 	$(COMPOSE) down -v
 
 logs:
@@ -29,11 +36,11 @@ break:
 fix:
 	curl -s -XPOST "localhost:8000/mode?m=healthy"; echo
 
-# Skip the wait for Prometheus/Alertmanager and send an alert straight to alertscope
+# Skip the wait for Prometheus/Alertmanager and send a labelled demo alert.
 fire:
 	sed -e "s/STARTS_AT/$$(date -u +%Y-%m-%dT%H:%M:%SZ)/" -e "s/FINGERPRINT/$$(date +%s)/" \
 		scripts/sample-alert.json | curl -s -XPOST localhost:8080/webhook/alertmanager \
-		-H 'content-type: application/json' -d @-; echo
+		-H 'content-type: application/json' $(AUTH_HEADER) -d @-; echo
 
 analyses:
-	curl -s localhost:8080/analyses | python3 -m json.tool
+	curl -s localhost:8080/analyses $(AUTH_HEADER) | python3 -m json.tool

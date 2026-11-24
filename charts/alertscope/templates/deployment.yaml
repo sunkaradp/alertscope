@@ -28,6 +28,8 @@ spec:
             - {name: ALERTSCOPE_LOKI_URL, value: {{ .Values.config.lokiUrl | quote }}}
             - {name: ALERTSCOPE_LOOKBACK_MINUTES, value: {{ .Values.config.lookbackMinutes | quote }}}
             - {name: ALERTSCOPE_COOLDOWN_MINUTES, value: {{ .Values.config.cooldownMinutes | quote }}}
+            - {name: ALERTSCOPE_MAX_PENDING_TASKS, value: {{ .Values.config.maxPendingTasks | quote }}}
+            - {name: ALERTSCOPE_DATABASE_PATH, value: /data/alertscope.db}
             - {name: ALERTSCOPE_KUBE_ENABLED, value: {{ .Values.config.kubeEnabled | quote }}}
             - {name: ALERTSCOPE_LLM_PROVIDER, value: {{ .Values.config.llm.provider | quote }}}
             - {name: ALERTSCOPE_LLM_MAX_TOKENS, value: {{ .Values.config.llm.maxTokens | quote }}}
@@ -36,6 +38,13 @@ spec:
             - {name: ALERTSCOPE_VERTEX_PROJECT, value: {{ .Values.config.vertex.project | quote }}}
             - {name: ALERTSCOPE_VERTEX_LOCATION, value: {{ .Values.config.vertex.location | quote }}}
             - {name: ALERTSCOPE_VERTEX_MODEL, value: {{ .Values.config.vertex.model | quote }}}
+            {{- if .Values.webhook.existingSecret }}
+            - name: ALERTSCOPE_WEBHOOK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.webhook.existingSecret }}
+                  key: ALERTSCOPE_WEBHOOK_TOKEN
+            {{- end }}
             {{- if .Values.slack.existingSecret }}
             - name: ALERTSCOPE_SLACK_WEBHOOK_URL
               valueFrom:
@@ -53,7 +62,7 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           readinessProbe:
-            httpGet: {path: /healthz, port: http}
+            httpGet: {path: /readyz, port: http}
             periodSeconds: 10
           livenessProbe:
             httpGet: {path: /healthz, port: http}
@@ -65,12 +74,20 @@ spec:
             capabilities: {drop: [ALL]}
           volumeMounts:
             - {name: tmp, mountPath: /tmp}
+            - {name: data, mountPath: /data}
             {{- if .Values.aws.roleArn }}
             - {name: aws-token, mountPath: /var/run/secrets/aws, readOnly: true}
             {{- end }}
       volumes:
         - name: tmp
           emptyDir: {}
+        - name: data
+          {{ if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-data
+          {{ else }}
+          emptyDir: {}
+          {{ end }}
         {{- if .Values.aws.roleArn }}
         - name: aws-token
           projected:

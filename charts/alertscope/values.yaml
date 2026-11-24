@@ -10,6 +10,7 @@ config:
   lokiUrl: http://loki.monitoring:3100
   lookbackMinutes: 15
   cooldownMinutes: 30
+  maxPendingTasks: 100
   kubeEnabled: true
   llm:
     provider: bedrock        # bedrock | vertex | stub
@@ -24,6 +25,10 @@ config:
 
 # Secret with key SLACK_WEBHOOK_URL. Leave empty to only log analyses.
 slack:
+  existingSecret: ""
+
+# Optional Secret with key ALERTSCOPE_WEBHOOK_TOKEN for Alertmanager bearer auth.
+webhook:
   existingSecret: ""
 
 # Cross-cloud auth to Bedrock without static keys: the pod gets a projected
@@ -50,5 +55,11 @@ serviceMonitor:
 resources:
   requests: {cpu: 50m, memory: 128Mi}
   limits: {memory: 256Mi}
+
+persistence:
+  enabled: true
+  accessModes: [ReadWriteOnce]
+  size: 5Gi
+  storageClassName: ""
 
 extraEnv: []
