@@ -48,10 +48,43 @@ make break MODE=leak      # errors | slow | leak | crash
 make fix
 ```
 
+Grafana: http://localhost:3000/d/alertscope (user admin; password is
+GRAFANA_ADMIN_PASSWORD from .env, defaulting to local-alertscope-password for
+this localhost-only demo). The other demo endpoints are bound to 127.0.0.1.
+
 `make fire` sends a fake alert straight to the webhook if you don't want to wait.
 
 Default LLM is `stub`, which is just a few regexes so you can run it without any cloud
 account. Set `ALERTSCOPE_LLM_PROVIDER=bedrock` or `vertex` in `.env` for the real thing.
+
+## Live SRE telemetry
+
+The Grafana dashboard refreshes every 15 seconds and includes two distinct views:
+AlertScope's own incident-analysis metrics and infrastructure telemetry queried
+directly from Prometheus. The local Compose stack scrapes:
+
+- **node-exporter** for host CPU, memory, filesystem and network.
+- **cAdvisor** for container CPU and memory.
+- **AlertScope** for webhook, collector, LLM and analysis metrics.
+- **The breaker** for the demo service's application metrics.
+
+For a Kubernetes deployment, the node and pod panels also expect node-exporter,
+kubelet/cAdvisor and kube-state-metrics to be scraped by the Prometheus datasource.
+The Kubernetes panels deliberately show **No data** if those sources are absent.
+A 15-second Grafana refresh does not make the underlying scrape interval faster.
+
+### Webhook protection and overload behaviour
+
+Set ALERTSCOPE_WEBHOOK_TOKEN to require an Authorization: Bearer <token> header
+on the Alertmanager webhook. Leave it unset only in a trusted local network. The
+service caps in-flight analysis tasks with ALERTSCOPE_MAX_PENDING_TASKS (default
+100); when the cap is reached it responds with HTTP 503 so Alertmanager can retry.
+Tune Alertmanager retry and grouping behaviour for your environment.
+
+The default stub provider is deterministic demo logic, not an LLM. Set the
+provider to bedrock or vertex and configure its cloud identity before describing
+an analysis as AI-generated. AlertScope never invents telemetry: unavailable sources
+remain unavailable and low-evidence conclusions should stay low confidence.
 
 ## Deploy
 
@@ -121,7 +154,8 @@ Prometheus metrics on `/metrics/`:
 
 Env vars with `ALERTSCOPE_` prefix, all in [config.py](app/src/alertscope/config.py).
 Main ones: `LLM_PROVIDER`, `BEDROCK_MODEL_ID`, `VERTEX_MODEL`, `LOOKBACK_MINUTES`,
-`COOLDOWN_MINUTES`, `LOKI_LABELS`, `KUBE_ENABLED`, `SLACK_WEBHOOK_URL`.
+`COOLDOWN_MINUTES`, `LOKI_LABELS`, `KUBE_ENABLED`, `SLACK_WEBHOOK_URL`,
+`WEBHOOK_TOKEN`, `MAX_PENDING_TASKS`.
 
 ## Repo
 
