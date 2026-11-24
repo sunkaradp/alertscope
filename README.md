@@ -76,10 +76,12 @@ A 15-second Grafana refresh does not make the underlying scrape interval faster.
 ### Webhook protection and overload behaviour
 
 Set ALERTSCOPE_WEBHOOK_TOKEN to require an Authorization: Bearer <token> header
-on the Alertmanager webhook. Leave it unset only in a trusted local network. The
-service caps in-flight analysis tasks with ALERTSCOPE_MAX_PENDING_TASKS (default
-100); when the cap is reached it responds with HTTP 503 so Alertmanager can retry.
-Tune Alertmanager retry and grouping behaviour for your environment.
+on the Alertmanager webhook. For Kubernetes, create a Secret containing the
+ALERTSCOPE_WEBHOOK_TOKEN key and set webhook.existingSecret in the chart values;
+configure the Alertmanager receiver to send the matching bearer token. Leave auth
+unset only in a trusted local network. The service caps in-flight analysis tasks
+with ALERTSCOPE_MAX_PENDING_TASKS (default 100); when the cap is reached it responds
+with HTTP 503 so Alertmanager can retry. Tune Alertmanager retry and grouping behaviour.
 
 The default stub provider is deterministic demo logic, not an LLM. Set the
 provider to bedrock or vertex and configure its cloud identity before describing
@@ -114,6 +116,8 @@ kubectl create ns argocd
 kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 kubectl create ns alertscope
 kubectl -n alertscope create secret generic alertscope-slack --from-literal=SLACK_WEBHOOK_URL=...
+# Optional: set webhook.existingSecret: alertscope-webhook in gitops/values/alertscope.yaml
+kubectl -n alertscope create secret generic alertscope-webhook --from-literal=ALERTSCOPE_WEBHOOK_TOKEN="$(openssl rand -hex 32)"
 kubectl apply -f gitops/root.yaml
 ```
 
@@ -155,7 +159,8 @@ Prometheus metrics on `/metrics/`:
 Env vars with `ALERTSCOPE_` prefix, all in [config.py](app/src/alertscope/config.py).
 Main ones: `LLM_PROVIDER`, `BEDROCK_MODEL_ID`, `VERTEX_MODEL`, `LOOKBACK_MINUTES`,
 `COOLDOWN_MINUTES`, `LOKI_LABELS`, `KUBE_ENABLED`, `SLACK_WEBHOOK_URL`,
-`WEBHOOK_TOKEN`, `MAX_PENDING_TASKS`.
+`WEBHOOK_TOKEN`, `MAX_PENDING_TASKS`. The service exposes `/healthz` for liveness,
+`/readyz` for readiness, and `/metrics/` for Prometheus.
 
 ## Repo
 
