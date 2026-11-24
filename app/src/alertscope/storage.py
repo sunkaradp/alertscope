@@ -71,16 +71,19 @@ class IncidentStore:
         incident_id = alert.key()
         first_seen = alert.startsAt.isoformat()
         now = analysis.created_at.isoformat()
-        details = json.dumps({
-            "provider": analysis.provider,
-            "confidence": analysis.confidence,
-            "likely_cause": analysis.likely_cause,
-        })
+        details = json.dumps(
+            {
+                "provider": analysis.provider,
+                "confidence": analysis.confidence,
+                "likely_cause": analysis.likely_cause,
+            }
+        )
         with self._session() as db:
             previous = db.execute(
                 "SELECT status FROM incidents WHERE incident_id=?", (incident_id,)
             ).fetchone()
-            db.execute("""
+            db.execute(
+                """
                 INSERT INTO incidents
                     (incident_id, alert, severity, status, first_seen, last_seen, latest_analysis)
                 VALUES (?, ?, ?, 'open', ?, ?, ?)
@@ -92,19 +95,26 @@ class IncidentStore:
                     status=CASE WHEN incidents.status='resolved' THEN 'open'
                                 ELSE incidents.status END,
                     resolved_at=NULL
-            """, (
-                incident_id, alert.name, alert.severity, first_seen, now,
-                analysis.model_dump_json(),
-            ))
-            event_type = (
-                "reopened"
-                if previous and previous["status"] == "resolved"
-                else "analysis_recorded"
+                """,
+                (
+                    incident_id,
+                    alert.name,
+                    alert.severity,
+                    first_seen,
+                    now,
+                    analysis.model_dump_json(),
+                ),
             )
-            db.execute("""
+            event_type = (
+                "reopened" if previous and previous["status"] == "resolved" else "analysis_recorded"
+            )
+            db.execute(
+                """
                 INSERT INTO incident_events (incident_id, event_type, occurred_at, details)
                 VALUES (?, ?, ?, ?)
-            """, (incident_id, event_type, now, details))
+                """,
+                (incident_id, event_type, now, details),
+            )
 
     def list_incidents(self, limit: int = 100) -> list[dict]:
         with self._session() as db:
@@ -140,29 +150,41 @@ class IncidentStore:
     def acknowledge(self, incident_id: str) -> dict | None:
         now = datetime.now(UTC).isoformat()
         with self._session() as db:
-            updated = db.execute("""
+            updated = db.execute(
+                """
                 UPDATE incidents SET status='acknowledged', acknowledged_at=?
                 WHERE incident_id=? AND status='open'
-            """, (now, incident_id))
+                """,
+                (now, incident_id),
+            )
             if updated.rowcount:
-                db.execute("""
+                db.execute(
+                    """
                     INSERT INTO incident_events (incident_id, event_type, occurred_at)
                     VALUES (?, 'acknowledged', ?)
-                """, (incident_id, now))
+                    """,
+                    (incident_id, now),
+                )
         return self.get_incident(incident_id)
 
     def resolve(self, incident_id: str) -> dict | None:
         now = datetime.now(UTC).isoformat()
         with self._session() as db:
-            updated = db.execute("""
+            updated = db.execute(
+                """
                 UPDATE incidents SET status='resolved', resolved_at=?
                 WHERE incident_id=? AND status!='resolved'
-            """, (now, incident_id))
+                """,
+                (now, incident_id),
+            )
             if updated.rowcount:
-                db.execute("""
+                db.execute(
+                    """
                     INSERT INTO incident_events (incident_id, event_type, occurred_at)
                     VALUES (?, 'resolved', ?)
-                """, (incident_id, now))
+                    """,
+                    (incident_id, now),
+                )
         return self.get_incident(incident_id)
 
     @staticmethod
