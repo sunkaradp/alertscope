@@ -44,7 +44,7 @@ async def test_prometheus_label_values_are_escaped_in_pod_selectors(alert):
         await collector.collect(changed, changed.startsAt + timedelta(minutes=3))
 
     pod_queries = [
-        query for query in captured_queries if "kube_pod_container_status_restarts_total" in query
+        query for query in captured_queries if "kube_pod_container_status_restarts_total" in query and "namespace=" in query
     ]
     assert pod_queries
     for query in pod_queries:
