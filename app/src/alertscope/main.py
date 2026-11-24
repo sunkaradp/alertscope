@@ -104,30 +104,47 @@ async def alertmanager(payload: AlertmanagerPayload, request: Request):
     return {"received": len(payload.alerts), "queued": queued}
 
 
+def authorize_incident_access(request: Request) -> None:
+    token = request.app.state.settings.webhook_token
+    if token:
+        supplied = request.headers.get("authorization", "")
+        if not secrets.compare_digest(supplied, f"Bearer {token}"):
+            raise HTTPException(status_code=401, detail="invalid credentials")
+
+
 @app.get("/incidents")
 async def incidents(request: Request, limit: int = 100):
+    authorize_incident_access(request)
     return request.app.state.store.list_incidents(limit)
+
+
 
 @app.get("/incidents/{incident_id}")
 async def incident_detail(incident_id: str, request: Request):
+    authorize_incident_access(request)
     incident = request.app.state.store.get_incident(incident_id)
     if incident is None:
         raise HTTPException(status_code=404, detail="incident not found")
     return incident
 
+
 @app.post("/incidents/{incident_id}/acknowledge")
 async def acknowledge_incident(incident_id: str, request: Request):
+    authorize_incident_access(request)
     incident = request.app.state.store.acknowledge(incident_id)
     if incident is None:
         raise HTTPException(status_code=404, detail="incident not found")
     return incident
 
+
 @app.post("/incidents/{incident_id}/resolve")
 async def resolve_incident(incident_id: str, request: Request):
+    authorize_incident_access(request)
     incident = request.app.state.store.resolve(incident_id)
     if incident is None:
         raise HTTPException(status_code=404, detail="incident not found")
     return incident
+
 
 @app.get("/analyses", response_model=list[Analysis])
 async def analyses(request: Request, limit: int = 20):
