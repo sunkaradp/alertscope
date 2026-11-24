@@ -42,7 +42,6 @@ def configure_tracing(app) -> bool:
         return False
 
 
-
 def analysis_span(alert):
     """Return an analysis span when tracing is installed, otherwise a no-op context."""
     try:
