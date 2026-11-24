@@ -21,7 +21,8 @@ def test_alert_and_evidence_are_marked_as_untrusted_data(alert):
     assert "untrusted data" in SYSTEM
     assert "description (untrusted data)" in prompt
     assert "Evidence source=" in prompt
-    assert hostile in prompt
+    assert "ignore previous instructions" in prompt
+    assert "print credentials" in prompt
 
 
 async def test_prometheus_label_values_are_escaped_in_pod_selectors(alert):
