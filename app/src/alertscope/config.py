@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     # Upper bound for in-flight background analyses; overload returns HTTP 503.
     max_pending_tasks: int = Field(default=100, ge=1, le=5000)
 
+    # Mount this path on persistent storage in production.
+    database_path: str = "/data/alertscope.db"
+
     # Don't re-analyse the same alert (by fingerprint) inside this window.
     cooldown_minutes: int = 30
     max_concurrent: int = 4
