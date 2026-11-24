@@ -46,7 +46,7 @@
     .list { margin:0;padding-left:18px;color:#d2dde5;font-size:12px;line-height:1.65; }
     .empty { padding:36px 18px;text-align:center;color:#8fa2b0;font-size:13px; }
     .notice { display:none;padding:12px 14px;border-radius:8px;background:#3a2d1f;border:1px solid #795d32;color:#f3d5a2;font-size:12px;margin-bottom:18px; }
-    .auth { display:flex;align-items:center;gap:8px; } .auth input { width:180px;max-width:35vw;background:#101a22;border:1px solid #40515e;border-radius:8px;padding:9px 10px;color:#e7edf2;font:12px inherit; }
+    .auth { display:flex;align-items:center;gap:8px; } .auth input { width:180px;max-width:35vw;background:#101a22;border:1px solid #40515e;border-radius:8px;padding:9px 10px;color:#e7edf2;font:inherit;font-size:12px; }
     footer { margin-top:22px;color:#718491;font-size:11px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap; }
     a { color:#a7c8dc;text-decoration:none; } a:hover { text-decoration:underline; }
     @media(max-width:900px){.layout{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -195,7 +195,7 @@
     });
     if (!timeline.children.length) {
       const li = document.createElement("li");
-      li.textContent = "No lifecycle events recorded."; 
+      li.textContent = "No lifecycle events recorded.";
       timeline.append(li);
     }
     root.append(timeline);
