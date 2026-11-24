@@ -1,6 +1,6 @@
 {
   "uid": "alertscope",
-  "title": "alertscope",
+  "title": "AlertScope — SRE Operations",
   "tags": [
     "alertscope",
     "alerting"
@@ -11,7 +11,7 @@
     "from": "now-24h",
     "to": "now"
   },
-  "refresh": "30s",
+  "refresh": "15s",
   "editable": true,
   "graphTooltip": 1,
   "templating": {
@@ -695,6 +695,421 @@
         "enableLogDetails": true,
         "dedupStrategy": "none",
         "prettifyLogMessage": false
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Node CPU utilisation",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))",
+          "legendFormat": "{{instance}}",
+          "interval": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Node memory utilisation",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))",
+          "legendFormat": "{{instance}}",
+          "interval": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Node filesystem utilisation",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "100 * (1 - (node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\",mountpoint!~\"/var/lib/docker/.+\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\",mountpoint!~\"/var/lib/docker/.+\"}))",
+          "legendFormat": "{{instance}} {{mountpoint}}",
+          "interval": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Node network receive",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 41,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "sum by (instance, device) (rate(node_network_receive_bytes_total{device!=\"lo\"}[5m]))",
+          "legendFormat": "{{instance}} {{device}}",
+          "interval": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Pod CPU usage",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 49,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{container!=\"\",image!=\"\"}[5m]))",
+          "legendFormat": "{{namespace}}/{{pod}}",
+          "interval": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cores",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Pod restarts — last 15m",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 49,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total[15m]))",
+          "legendFormat": "{{namespace}}/{{pod}}",
+          "interval": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Pod phases",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "sum by (phase) (kube_pod_status_phase)",
+          "legendFormat": "{{phase}}",
+          "interval": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "Node network transmit",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 57,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "sum by (instance, device) (rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m]))",
+          "legendFormat": "{{instance}} {{device}}",
+          "interval": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 19,
+      "type": "text",
+      "title": "Telemetry coverage",
+      "gridPos": {
+        "x": 0,
+        "y": 65,
+        "w": 24,
+        "h": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Infrastructure panels use live Prometheus series only.** Node CPU, memory, filesystem and network require `node-exporter`. Pod CPU and restart/phase panels require kubelet/cAdvisor and `kube-state-metrics`. Missing exporters or scrape targets appear as **No data**; AlertScope does not synthesize telemetry. Dashboard refresh is 15 seconds, bounded by the Prometheus scrape interval."
       }
     }
   ]
