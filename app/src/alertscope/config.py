@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     loki_labels: list[str] = Field(default=["namespace", "pod", "container"])
     loki_max_lines: int = 60
 
+    # Origins allowed to call the incident API from a browser. Override for a
+    # custom Pages domain; never use "*" when bearer-token auth is enabled.
+    cors_origins: list[str] = Field(default=["https://sunkaradp.github.io"])
+
     # How far back from the alert start we look for metrics and logs.
     lookback_minutes: int = 15
 
@@ -37,7 +41,7 @@ class Settings(BaseSettings):
     # Optional shared secret for Alertmanager webhook authentication.
     webhook_token: str = ""
 
-    # Upper bound for in-flight background analyses; overload returns HTTP 503.
+    # Upper bound for in-flight analysis tasks; overload returns HTTP 503.
     max_pending_tasks: int = Field(default=100, ge=1, le=5000)
 
     # Mount this path on persistent storage in production.
