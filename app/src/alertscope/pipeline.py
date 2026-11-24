@@ -43,6 +43,7 @@ class Pipeline:
         max_concurrent: int,
         history_size: int,
         analyse_resolved: bool = False,
+        store=None,
     ):
         self.collectors = collectors
         self.llm = llm
@@ -51,6 +52,7 @@ class Pipeline:
         self.sem = asyncio.Semaphore(max_concurrent)
         self.history: deque[Analysis] = deque(maxlen=history_size)
         self.analyse_resolved = analyse_resolved
+        self.store = store
 
     def accept(self, alert: Alert) -> bool:
         metrics.ALERTS.labels(alert.status).inc()
@@ -109,6 +111,11 @@ class Pipeline:
             analysis.duration_s = time.monotonic() - t0
             metrics.DURATION.observe(analysis.duration_s)
             self.history.appendleft(analysis)
+            if self.store is not None:
+                try:
+                    self.store.record_analysis(alert, analysis)
+                except Exception:
+                    log.exception("incident persistence failed")
             events.emit(analysis)
             try:
                 await self.notify(analysis)
