@@ -73,12 +73,20 @@ spec:
             capabilities: {drop: [ALL]}
           volumeMounts:
             - {name: tmp, mountPath: /tmp}
+            - {name: data, mountPath: /data}
             {{- if .Values.aws.roleArn }}
             - {name: aws-token, mountPath: /var/run/secrets/aws, readOnly: true}
             {{- end }}
       volumes:
         - name: tmp
           emptyDir: {}
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
         {{- if .Values.aws.roleArn }}
         - name: aws-token
           projected:
