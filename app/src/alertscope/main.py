@@ -8,6 +8,7 @@ from pathlib import Path
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from prometheus_client import make_asgi_app
 
@@ -64,6 +65,13 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="alertscope", version=__version__, lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_settings().cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 configure_tracing(app)
 app.mount("/metrics", make_asgi_app())
 
