@@ -57,14 +57,30 @@ def parse_reply(text: str, alert: Alert) -> Analysis:
     # Models sometimes add a sentence before the JSON; take the outermost object.
     start, end = cleaned.find("{"), cleaned.rfind("}")
     try:
+        if start < 0 or end <= start:
+            raise ValueError("model reply did not contain a JSON object")
         data = json.loads(cleaned[start : end + 1])
+        if not isinstance(data, dict):
+            raise ValueError("model reply JSON root must be an object")
+
+        confidence = str(data.get("confidence", "low")).lower()
+        if confidence not in {"low", "medium", "high"}:
+            confidence = "low"
+        evidence = data.get("evidence", [])
+        next_steps = data.get("next_steps", [])
+        if not isinstance(evidence, list):
+            evidence = []
+        if not isinstance(next_steps, list):
+            next_steps = []
+        summary = data.get("summary", "")
+        likely_cause = data.get("likely_cause", "unknown")
         return Analysis(
             **base,
-            summary=str(data.get("summary", "")).strip() or "No summary returned.",
-            likely_cause=str(data.get("likely_cause", "unknown")),
-            confidence=str(data.get("confidence", "low")).lower(),
-            evidence=[str(x) for x in data.get("evidence", [])][:6],
-            next_steps=[str(x) for x in data.get("next_steps", [])][:5],
+            summary=str(summary).strip()[:1500] or "No summary returned.",
+            likely_cause=str(likely_cause).strip()[:500] or "unknown",
+            confidence=confidence,
+            evidence=[str(x)[:500] for x in evidence[:6]],
+            next_steps=[str(x)[:500] for x in next_steps[:5]],
         )
     except (ValueError, TypeError):
         return Analysis(
