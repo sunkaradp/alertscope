@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import timedelta
 
 import httpx
@@ -42,12 +43,14 @@ async def test_prometheus_label_values_are_escaped_in_pod_selectors(alert):
         collector = PrometheusCollector("http://prometheus", client, timedelta(minutes=5))
         await collector.collect(changed, changed.startsAt + timedelta(minutes=3))
 
-    expected = "namespace=" + json.dumps(unusual_namespace)
     pod_queries = [
         query for query in captured_queries if "kube_pod_container_status_restarts_total" in query
     ]
     assert pod_queries
-    assert all(expected in query for query in pod_queries)
+    for query in pod_queries:
+        namespace_literals = re.findall(r'namespace=("(?:\\.|[^"\\])*")', query)
+        assert len(namespace_literals) == 1, repr(query)
+        assert json.loads(namespace_literals[0]) == unusual_namespace
 
 
 def test_model_response_schema_is_bounded_and_confidence_is_allowlisted(alert):
