@@ -154,13 +154,44 @@ Prometheus metrics on `/metrics/`:
 - `alertscope_llm_tokens_total{provider,direction}`
 - `alertscope_collector_errors_total{collector}`
 
+## Incident lifecycle and tracing
+
+Analyses are stored in SQLite at `/data/alertscope.db`. The local Compose stack
+mounts a named volume; the Helm chart provisions a 5Gi PVC by default. Keep one
+replica while using this SQLite backend. Back up the PVC before upgrades or
+cluster changes; for multi-replica/high-write deployments, move this ledger to
+PostgreSQL rather than sharing SQLite over a network filesystem.
+
+Incident API:
+
+```bash
+curl http://localhost:8080/incidents
+curl http://localhost:8080/incidents/<incident-id>
+curl -X POST http://localhost:8080/incidents/<incident-id>/acknowledge
+curl -X POST http://localhost:8080/incidents/<incident-id>/resolve
+```
+
+When `ALERTSCOPE_WEBHOOK_TOKEN` is set, include the same
+`Authorization: Bearer <token>` header on incident API calls as well as the
+Alertmanager webhook. A new analysis for a previously resolved fingerprint
+reopens that incident.
+
+Local tracing is exported to Tempo over OTLP/HTTP. Open Grafana Explore, select
+the Tempo datasource, and search for service `alertscope`. The app instruments
+FastAPI requests and outbound HTTPX calls. For Kubernetes, add
+`OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_SERVICE_NAME` through `extraEnv`, and
+point the endpoint at your in-cluster Tempo/OTel Collector service. Tracing is
+disabled when no OTLP endpoint is configured.
+
+
 ## Config
 
 Env vars with `ALERTSCOPE_` prefix, all in [config.py](app/src/alertscope/config.py).
 Main ones: `LLM_PROVIDER`, `BEDROCK_MODEL_ID`, `VERTEX_MODEL`, `LOOKBACK_MINUTES`,
 `COOLDOWN_MINUTES`, `LOKI_LABELS`, `KUBE_ENABLED`, `SLACK_WEBHOOK_URL`,
-`WEBHOOK_TOKEN`, `MAX_PENDING_TASKS`. The service exposes `/healthz` for liveness,
-`/readyz` for readiness, and `/metrics/` for Prometheus.
+`WEBHOOK_TOKEN`, `MAX_PENDING_TASKS`, and `DATABASE_PATH` (default `/data/alertscope.db`).
+The service exposes `/healthz` for liveness, `/readyz` for readiness, `/metrics/`
+for Prometheus, and `/incidents` for the persistent incident API.
 
 ## Repo
 
