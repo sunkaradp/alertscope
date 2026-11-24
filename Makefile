@@ -16,7 +16,7 @@ lint:
 up:
 	$(COMPOSE) up -d --build
 	@echo "AlertScope console http://localhost:8080"
-	@echo "Grafana http://localhost:3000/d/alertscope (admin / local-alertscope-password)"
+	@echo "Grafana http://localhost:3000/d/alertscope (admin / GRAFANA_ADMIN_PASSWORD; default local-alertscope-password)"
 
 down:
 	$(COMPOSE) down
