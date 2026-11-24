@@ -61,7 +61,7 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           readinessProbe:
-            httpGet: {path: /healthz, port: http}
+            httpGet: {path: /readyz, port: http}
             periodSeconds: 10
           livenessProbe:
             httpGet: {path: /healthz, port: http}
