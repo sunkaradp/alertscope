@@ -29,6 +29,7 @@ spec:
             - {name: ALERTSCOPE_LOOKBACK_MINUTES, value: {{ .Values.config.lookbackMinutes | quote }}}
             - {name: ALERTSCOPE_COOLDOWN_MINUTES, value: {{ .Values.config.cooldownMinutes | quote }}}
             - {name: ALERTSCOPE_MAX_PENDING_TASKS, value: {{ .Values.config.maxPendingTasks | quote }}}
+            - {name: ALERTSCOPE_DATABASE_PATH, value: /data/alertscope.db}
             - {name: ALERTSCOPE_KUBE_ENABLED, value: {{ .Values.config.kubeEnabled | quote }}}
             - {name: ALERTSCOPE_LLM_PROVIDER, value: {{ .Values.config.llm.provider | quote }}}
             - {name: ALERTSCOPE_LLM_MAX_TOKENS, value: {{ .Values.config.llm.maxTokens | quote }}}
