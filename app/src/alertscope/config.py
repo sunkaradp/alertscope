@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     max_pending_tasks: int = Field(default=100, ge=1, le=5000)
 
     # Mount this path on persistent storage in production.
-    database_path: str = "/data/alertscope.db"
+    database_path: str = "/tmp/alertscope.db"
 
     # Don't re-analyse the same alert (by fingerprint) inside this window.
     cooldown_minutes: int = 30
