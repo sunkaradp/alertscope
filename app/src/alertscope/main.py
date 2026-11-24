@@ -16,6 +16,7 @@ from .llm import build_provider
 from .models import AlertmanagerPayload, Analysis
 from .pipeline import Pipeline
 from .storage import IncidentStore
+from .tracing import configure_tracing
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("alertscope")
@@ -48,6 +49,7 @@ def build_pipeline(settings: Settings, http: httpx.AsyncClient, store=None) -> P
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    configure_tracing(app)
     settings = get_settings()
     async with httpx.AsyncClient(timeout=20) as http:
         app.state.store = IncidentStore(settings.database_path)
