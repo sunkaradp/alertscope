@@ -25,6 +25,7 @@ def test_incident_lifecycle_persists_and_reopens(tmp_path):
     item = store.get_incident("incident-123")
     assert item["status"] == "open"
     assert item["latest_analysis"]["likely_cause"] == "CrashLoopBackOff"
+    assert item["events"][0]["event_type"] == "analysis_recorded"
 
     acknowledged = store.acknowledge("incident-123")
     assert acknowledged["status"] == "acknowledged"
@@ -33,6 +34,7 @@ def test_incident_lifecycle_persists_and_reopens(tmp_path):
     resolved = store.resolve("incident-123")
     assert resolved["status"] == "resolved"
     assert resolved["resolved_at"] is not None
+    assert [event["event_type"] for event in resolved["events"]][-2:] == ["acknowledged", "resolved"]
 
     # A new analysis for the same fingerprint reopens the incident.
     later = analysis.model_copy(update={"summary": "The pod restarted again."})
@@ -41,6 +43,7 @@ def test_incident_lifecycle_persists_and_reopens(tmp_path):
     assert reopened["status"] == "open"
     assert reopened["resolved_at"] is None
     assert reopened["latest_analysis"]["summary"] == "The pod restarted again."
+    assert reopened["events"][-1]["event_type"] == "reopened"
 
 
 def test_missing_incident_operations_return_none(tmp_path):
