@@ -27,23 +27,16 @@ def configure_tracing(app) -> bool:
         if not traces_endpoint.endswith("/v1/traces"):
             traces_endpoint += "/v1/traces"
         provider = TracerProvider(
-            resource=Resource.create(
-                {"service.name": os.getenv("OTEL_SERVICE_NAME", "alertscope")}
-            )
+            resource=Resource.create({"service.name": os.getenv("OTEL_SERVICE_NAME", "alertscope")})
         )
-        provider.add_span_processor(
-            BatchSpanProcessor(OTLPSpanExporter(endpoint=traces_endpoint))
-        )
+        provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=traces_endpoint)))
         trace.set_tracer_provider(provider)
         FastAPIInstrumentor.instrument_app(app)
         HTTPXClientInstrumentor().instrument()
         log.info("OpenTelemetry OTLP tracing enabled: %s", traces_endpoint)
         return True
     except ImportError:
-        log.warning(
-            "OTLP endpoint configured but tracing extras are missing; "
-            "install alertscope[otel]"
-        )
+        log.warning("OTLP endpoint configured but tracing extras are missing; install alertscope[otel]")
         return False
 
 
