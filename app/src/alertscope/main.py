@@ -51,7 +51,6 @@ def build_pipeline(settings: Settings, http: httpx.AsyncClient, store=None) -> P
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    configure_tracing(app)
     settings = get_settings()
     async with httpx.AsyncClient(timeout=20) as http:
         app.state.store = IncidentStore(settings.database_path)
@@ -65,6 +64,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="alertscope", version=__version__, lifespan=lifespan)
+configure_tracing(app)
 app.mount("/metrics", make_asgi_app())
 
 
