@@ -33,6 +33,7 @@ services:
     environment:
       ALERTSCOPE_PROMETHEUS_URL: http://prometheus:9090
       ALERTSCOPE_LOKI_URL: http://loki:3100
+      ALERTSCOPE_DATABASE_PATH: /data/alertscope.db
       ALERTSCOPE_COOLDOWN_MINUTES: "5"
       ALERTSCOPE_LOKI_LABELS: '["container"]'
       # stub works with no credentials; set bedrock or vertex in ../../.env
