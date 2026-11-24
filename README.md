@@ -48,6 +48,9 @@ make break MODE=leak      # errors | slow | leak | crash
 make fix
 ```
 
+Use `make down` to stop the stack without deleting incident/trace volumes. Use
+`make clean` only when you intentionally want to delete the persisted local data.
+
 AlertScope console: http://localhost:8080 (incident list, analysis details,
 acknowledge and resolve actions). Grafana: http://localhost:3000/d/alertscope
 (user admin; password is GRAFANA_ADMIN_PASSWORD from .env, defaulting to
