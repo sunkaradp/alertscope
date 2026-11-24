@@ -179,6 +179,36 @@
     const pre = document.createElement("pre");
     pre.textContent = JSON.stringify({incident_id:item.incident_id, first_seen:item.first_seen, last_seen:item.last_seen, acknowledged_at:item.acknowledged_at, resolved_at:item.resolved_at, provider:analysis.provider, duration_s:analysis.duration_s}, null, 2);
     root.append(pre);
+    const timelineHeading = document.createElement("div");
+    timelineHeading.className = "section-title";
+    timelineHeading.textContent = "Timeline";
+    root.append(timelineHeading);
+    const timeline = document.createElement("ul");
+    timeline.className = "list";
+    (item.events || []).forEach(event => {
+      const li = document.createElement("li");
+      const details = event.details && Object.keys(event.details).length
+        ? " · " + Object.entries(event.details).map(([key, value]) => key + ": " + value).join(", ")
+        : "";
+      li.textContent = time(event.occurred_at) + " · " + event.event_type + details;
+      timeline.append(li);
+    });
+    if (!timeline.children.length) {
+      const li = document.createElement("li");
+      li.textContent = "No lifecycle events recorded."; 
+      timeline.append(li);
+    }
+    root.append(timeline);
+  }
+  async function loadDetail(id) {
+    try {
+      const response = await fetch("/incidents/" + encodeURIComponent(id), {headers:headers(), cache:"no-store"});
+      if (!response.ok) return;
+      const item = await response.json();
+      if (selected === id) renderDetail(item);
+    } catch (_) {
+      // Keep the list usable if a detail refresh temporarily fails.
+    }
   }
   function render() {
     $("total").textContent = records.length;
@@ -192,7 +222,7 @@
     records.forEach(item => {
       const row = document.createElement("tr");
       if (item.incident_id === selected) row.className = "selected";
-      row.addEventListener("click", () => { renderDetail(item); render(); });
+      row.addEventListener("click", () => { selected = item.incident_id; render(); });
       addCell(row, item.alert);
       addCell(row, item.severity, String(item.severity || "").toLowerCase());
       addCell(row, pill(item.status));
@@ -217,7 +247,7 @@
     });
     if (selected) {
       const current = records.find(x => x.incident_id === selected);
-      if (current) renderDetail(current);
+      if (current) { renderDetail(current); loadDetail(current.incident_id); }
       else renderDetail(null);
     }
   }
