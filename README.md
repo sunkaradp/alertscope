@@ -159,8 +159,9 @@ Prometheus metrics on `/metrics/`:
 
 ## Incident lifecycle and tracing
 
-Analyses are stored in SQLite at `/data/alertscope.db`. The local Compose stack
-mounts a named volume; the Helm chart provisions a 5Gi PVC by default. Keep one
+Analyses are stored in SQLite. The app defaults to `/tmp/alertscope.db` for a
+simple local process; the local Compose stack and Helm deployment explicitly use
+`/data/alertscope.db` on a named volume/PVC. The Helm chart provisions a 5Gi PVC by default. Keep one
 replica while using this SQLite backend. Back up the PVC before upgrades or
 cluster changes; for multi-replica/high-write deployments, move this ledger to
 PostgreSQL rather than sharing SQLite over a network filesystem.
@@ -192,7 +193,7 @@ disabled when no OTLP endpoint is configured.
 Env vars with `ALERTSCOPE_` prefix, all in [config.py](app/src/alertscope/config.py).
 Main ones: `LLM_PROVIDER`, `BEDROCK_MODEL_ID`, `VERTEX_MODEL`, `LOOKBACK_MINUTES`,
 `COOLDOWN_MINUTES`, `LOKI_LABELS`, `KUBE_ENABLED`, `SLACK_WEBHOOK_URL`,
-`WEBHOOK_TOKEN`, `MAX_PENDING_TASKS`, and `DATABASE_PATH` (default `/data/alertscope.db`).
+`WEBHOOK_TOKEN`, `MAX_PENDING_TASKS`, and `DATABASE_PATH` (default `/tmp/alertscope.db`; Compose/Helm override it to `/data/alertscope.db`).
 The service exposes `/healthz` for liveness, `/readyz` for readiness, `/metrics/`
 for Prometheus, and `/incidents` for the persistent incident API.
 
